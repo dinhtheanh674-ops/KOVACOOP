@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-amber-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KŌVA KOMBUCHA - Vòng Quay May Mắn</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            kova: {
+              green: '#1E3A2B',
+              olive: '#2D5A3F',
+              gold: '#D4AF37',
+              accent: '#E6A15C',
+              cream: '#FAFAFA',
+              card: '#F4EFEA',
+              rust: '#C85A32'
+            }
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-serif-title {
+      font-family: 'Playfair Display', serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F4EFEA;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E3A2B;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col justify-between text-stone-800 bg-gradient-to-b from-amber-50 via-stone-100 to-amber-100/50 pb-12">
+
+  <header class="bg-kova-green text-amber-50 shadow-md sticky top-0 z-30">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-kova-gold flex items-center justify-center text-kova-green font-bold text-xl font-serif">
+          K
+        </div>
+        <div>
+          <h1 class="font-serif-title text-xl font-bold tracking-wide leading-none text-kova-gold">KŌVA KOMBUCHA</h1>
+          <p class="text-xs text-amber-200/80 tracking-wider">Lên Men Tự Nhiên - Trọn Vẹn Sức Khỏe</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-2">
+        <button id="btn-sound" class="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all text-amber-100" title="Bật/Tắt Âm thanh">
+          <i data-lucide="volume-2" id="icon-sound" class="w-5 h-5"></i>
+        </button>
+        <button id="btn-staff-panel" class="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-all text-amber-100" title="Quản lý Quản trị viên">
+          <i data-lucide="settings" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto w-full px-4 py-6 flex-grow flex flex-col items-center">
+    
+    <!-- Toast Notification For Bonus Spin -->
+    <div id="bonus-toast" class="hidden transform transition-all duration-500 ease-out mb-4 w-full max-w-md bg-emerald-800 text-amber-50 p-4 rounded-2xl shadow-xl flex items-center justify-between border-2 border-kova-gold animate-bounce">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-kova-gold text-kova-green rounded-full">
+          <i data-lucide="gift" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <p class="font-bold text-sm text-kova-gold">Ưu Đãi Truy Cập Trang Web!</p>
+          <p class="text-xs text-amber-100">Bạn được tự động tặng thêm <span class="font-bold underline text-white">+1 lượt quay miễn phí</span>!</p>
+        </div>
+      </div>
+      <button onclick="closeBonusToast()" class="text-amber-200 hover:text-white p-1">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="w-full max-w-md bg-white p-1.5 rounded-2xl shadow-sm border border-stone-200 flex mb-6">
+      <button id="tab-wheel" onclick="switchTab('wheel')" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center space-x-2 bg-kova-green text-white shadow-sm">
+        <i data-lucide="disc" class="w-4 h-4"></i>
+        <span>Vòng Quay</span>
+      </button>
+      <button id="tab-vouchers" onclick="switchTab('vouchers')" class="flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center space-x-2 text-stone-600 hover:text-kova-green">
+        <i data-lucide="ticket" class="w-4 h-4"></i>
+        <span>Kho Voucher (<span id="voucher-count-badge">0</span>)</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: WHEEL SECTION -->
+    <div id="section-wheel" class="w-full flex flex-col items-center">
+      
+      <!-- User Spin Status Card -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200 mb-6 w-full max-w-md text-center flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-kova-green flex items-center justify-center font-bold">
+            <i data-lucide="sparkles" class="w-6 h-6 text-kova-rust"></i>
+          </div>
+          <div class="text-left">
+            <p class="text-xs text-stone-500 font-medium">Lượt quay khả dụng</p>
+            <p class="text-xl font-bold text-kova-green"><span id="spins-left-display" class="text-2xl text-kova-rust font-serif">1</span> lượt</p>
+          </div>
+        </div>
+        <button id="btn-add-spin" class="px-3.5 py-2 bg-amber-100 hover:bg-amber-200 text-kova-green rounded-xl text-xs font-semibold transition-all flex items-center space-x-1">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Thêm lượt</span>
+        </button>
+      </div>
+
+      <!-- Wheel Container -->
+      <div class="relative my-2 w-full max-w-[340px] sm:max-w-[400px] aspect-square flex items-center justify-center">
+        <!-- Pointer Arrow -->
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-8 h-10 drop-shadow-md">
+          <div class="w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-t-[32px] border-t-kova-rust"></div>
+        </div>
+
+        <!-- Canvas Wheel -->
+        <div class="relative w-full h-full p-3 bg-kova-green rounded-full shadow-2xl border-4 border-kova-gold">
+          <canvas id="wheelCanvas" width="500" height="500" class="w-full h-full rounded-full cursor-pointer transition-transform duration-100"></canvas>
+          
+          <!-- Center Button / Hub -->
+          <button id="btn-spin" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-kova-gold to-amber-600 rounded-full border-4 border-white shadow-xl flex flex-col items-center justify-center text-white font-bold hover:scale-105 active:scale-95 transition-transform z-10">
+            <span class="text-xs uppercase tracking-wider font-semibold">BẮT ĐẦU</span>
+            <span class="text-lg font-serif-title font-extrabold leading-none">QUAY</span>
+          </button>
+        </div>
+      </div>
+
+      <p class="text-xs text-stone-500 mt-6 text-center max-w-xs">
+        * Nhấn vào nút QUAY hoặc nhấp trực tiếp vào vòng quay để tìm kiếm phần thưởng Kombucha & Bánh Kẹo hấp dẫn!
+      </p>
+
+    </div>
+
+    <!-- TAB 2: VOUCHER STORE SECTION -->
+    <div id="section-vouchers" class="w-full max-w-md hidden">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-stone-200 min-h-[350px]">
+        <h2 class="font-serif-title font-bold text-lg text-kova-green mb-4 flex items-center justify-between">
+          <span>Tủ Quà & Voucher</span>
+          <span class="text-xs font-normal text-stone-500 font-sans" id="voucher-total-text">0 quà tặng</span>
+        </h2>
+
+        <!-- Voucher List Container -->
+        <div id="voucher-list" class="space-y-3"></div>
+
+        <!-- Empty State -->
+        <div id="voucher-empty" class="hidden py-12 text-center text-stone-400">
+          <i data-lucide="ticket-slash" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
+          <p class="text-sm font-medium">Bạn chưa nhận được voucher nào.</p>
+          <p class="text-xs text-stone-400 mt-1">Hãy dùng lượt quay may mắn để trúng quà nhé!</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- STAFF / ADMIN CONTROL PANEL MODAL -->
+  <div id="modal-staff" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-stone-200">
+      
+      <div class="bg-kova-green text-amber-50 p-4 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-kova-gold"></i>
+          <h3 class="font-serif-title font-bold text-lg">Quản Lý Tỉ Lệ Trúng Thưởng</h3>
+        </div>
+        <button onclick="closeStaffModal()" class="text-stone-300 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 flex-1">
+        <p class="text-xs text-stone-500">
+          Chỉnh sửa tỉ lệ xuất hiện (trọng số) của từng giải thưởng. Tỉ lệ trúng thưởng sẽ tự động tính toán lại.
+        </p>
+
+        <div id="staff-weights-container" class="space-y-3"></div>
+      </div>
+
+      <div class="bg-stone-50 p-4 border-t border-stone-200 flex justify-between items-center">
+        <button onclick="resetWeightsToDefault()" class="px-3 py-2 text-xs text-stone-600 hover:text-red-600 font-medium">
+          Mặc định ban đầu
+        </button>
+        <div class="flex space-x-2">
+          <button onclick="closeStaffModal()" class="px-4 py-2 bg-stone-200 text-stone-700 text-xs font-semibold rounded-xl hover:bg-stone-300">
+            Hủy
+          </button>
+          <button onclick="saveStaffWeights()" class="px-4 py-2 bg-kova-green text-white text-xs font-semibold rounded-xl hover:bg-kova-olive shadow-sm">
+            Lưu Thiết Lập
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PRIZE WINNER MODAL -->
+  <div id="modal-result" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl transform transition-all border-4 border-kova-gold relative">
+      <div class="w-16 h-16 bg-amber-100 text-kova-rust rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-kova-gold">
+        <i data-lucide="gift" class="w-8 h-8"></i>
+      </div>
+      
+      <p class="text-xs font-bold uppercase tracking-widest text-kova-rust mb-1">Chúc Mừng Bạn!</p>
+      <h3 id="result-prize-title" class="font-serif-title text-2xl font-bold text-kova-green mb-2">Voucher KŌVA</h3>
+      <p id="result-prize-desc" class="text-xs text-stone-600 mb-6">Bạn đã trúng một phần thưởng đặc biệt từ KŌVA Kombucha.</p>
+
+      <div class="space-y-2">
+        <button id="btn-claim-prize" onclick="claimPrizeToVouchers()" class="w-full py-3 bg-kova-green hover:bg-kova-olive text-white font-bold rounded-xl shadow-md transition-all text-sm flex items-center justify-center space-x-2">
+          <i data-lucide="ticket" class="w-4 h-4"></i>
+          <span>Lưu Vào Kho Voucher</span>
+        </button>
+        <button onclick="closeResultModal()" class="w-full py-2.5 text-stone-500 hover:text-stone-700 text-xs font-semibold">
+          Quay tiếp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR VOUCHER MODAL -->
+  <div id="modal-qr" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-stone-200">
+      <div class="flex justify-between items-center mb-4">
+        <h4 class="font-serif-title font-bold text-kova-green text-lg">Mã Ưu Đãi KŌVA</h4>
+        <button onclick="closeQRModal()" class="text-stone-400 hover:text-stone-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="bg-stone-50 p-4 rounded-2xl border border-dashed border-stone-300 mb-4 flex flex-col items-center">
+        <div id="qrcode-container" class="bg-white p-3 rounded-xl shadow-inner mb-3"></div>
+        <p id="qr-voucher-code" class="font-mono text-sm font-bold text-kova-rust tracking-widest">KOVA-XXXXXX</p>
+      </div>
+
+      <p id="qr-voucher-name" class="font-bold text-kova-green text-sm mb-1">Tên Voucher</p>
+      <p class="text-xs text-stone-500 mb-6">Vui lòng đưa mã QR này cho nhân viên tại quầy KŌVA Kombucha để áp dụng ưu đãi.</p>
+
+      <button onclick="closeQRModal()" class="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-xl">
+        Đóng
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- APP STATE & EXACT ORIGINAL PRIZES ---
+    const PRIZES = [
+      { id: 1, name: "Bánh/Kẹo Cao Cấp", fullTitle: "Tặng 1 gói kẹo / 1 bánh cao cấp", desc: "Tặng 1 gói kẹo ngọt ngào hoặc 1 phần bánh cao cấp tại quầy", color: "#1E3A2B", textColor: "#FAFAFA", weight: 30, type: "voucher" },
+      { id: 2, name: "Mua Bánh Tặng Kombucha", fullTitle: "Mua 1 bánh -> Tặng 1 Kombucha thứ 2", desc: "Mua 1 phần bánh bất kỳ tặng ngay 01 chai Kombucha thứ 2", color: "#E6A15C", textColor: "#1E3A2B", weight: 25, type: "voucher" },
+      { id: 3, name: "Giảm 10k - 20k Đơn Bánh", fullTitle: "Giảm ngay 10k - 20k đơn Bánh Kẹo", desc: "Giảm trực tiếp 10.000đ - 20.000đ cho đơn hàng Bánh Kẹo", color: "#2D5A3F", textColor: "#FAFAFA", weight: 15, type: "voucher" },
+      { id: 4, name: "Tặng Kẹo Dẻo / Syrup", fullTitle: "Tặng 1 phần Kẹo dẻo / Extra Syrup", desc: "Tặng 1 phần Kẹo dẻo trái cây hoặc Extra Syrup tự chọn", color: "#D4AF37", textColor: "#1E3A2B", weight: 15, type: "voucher" },
+      { id: 5, name: "Sticker / Móc Khóa", fullTitle: "Tặng 1 Bộ Sticker / Móc Khóa KŌVA", desc: "Tặng 01 Bộ Sticker thương hiệu hoặc Móc khóa KŌVA độc quyền", color: "#C85A32", textColor: "#FAFAFA", weight: 10, type: "voucher" },
+      { id: 6, name: "Thêm 1 Lượt Quay", fullTitle: "Thêm 1 Lượt Quay May Mắn", desc: "Chúc mừng bạn nhận thêm 1 lượt quay miễn phí ngay lập tức!", color: "#FAFAFA", textColor: "#1E3A2B", weight: 5, type: "extra_spin" }
+    ];
+
+    let spinsLeft = 1;
+    let soundEnabled = true;
+    let isSpinning = false;
+    let currentAngle = 0;
+    let userVouchers = [];
+    let pendingPrize = null;
+
+    // --- WEB AUDIO API SYSTEM ---
+    class SoundEffects {
+      constructor() {
+        this.ctx = null;
+      }
+
+      initCtx() {
+        if (!this.ctx) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      }
+
+      playTick() {
+        if (!soundEnabled) return;
+        this.initCtx();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.04);
+      }
+
+      playWin() {
+        if (!soundEnabled) return;
+        this.initCtx();
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, this.ctx.currentTime + idx * 0.1);
+          gain.gain.linearRampToValueAtTime(0.2, this.ctx.currentTime + idx * 0.1 + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.1 + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(this.ctx.currentTime + idx * 0.1);
+          osc.stop(this.ctx.currentTime + idx * 0.1 + 0.3);
+        });
+      }
+    }
+
+    const sound = new SoundEffects();
+
+    // --- INITIALIZATION ---
+    window.addEventListener('load', () => {
+      loadState();
+      
+      // REQUIREMENT 1: Automatically add 1 free spin on each page visit / reload
+      spinsLeft += 1;
+      saveState();
+      showBonusToast();
+
+      updateSpinsDisplay();
+      renderWheel();
+      renderVouchers();
+      initLucide();
+    });
+
+    function initLucide() {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    // --- LOCAL STORAGE STATE MANAGEMENT ---
+    function loadState() {
+      const savedSpins = localStorage.getItem('kova_spins');
+      if (savedSpins !== null) {
+        spinsLeft = parseInt(savedSpins, 10);
+      }
+
+      const savedVouchers = localStorage.getItem('kova_vouchers');
+      if (savedVouchers) {
+        try {
+          userVouchers = JSON.parse(savedVouchers);
+        } catch (e) {
+          userVouchers = [];
+        }
+      }
+
+      const savedWeights = localStorage.getItem('kova_weights');
+      if (savedWeights) {
+        try {
+          const weightsObj = JSON.parse(savedWeights);
+          PRIZES.forEach(p => {
+            if (weightsObj[p.id] !== undefined) {
+              p.weight = weightsObj[p.id];
+            }
+          });
+        } catch (e) {}
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('kova_spins', spinsLeft);
+      localStorage.setItem('kova_vouchers', JSON.stringify(userVouchers));
+      
+      const weightsObj = {};
+      PRIZES.forEach(p => weightsObj[p.id] = p.weight);
+      localStorage.setItem('kova_weights', JSON.stringify(weightsObj));
+    }
+
+    // --- BONUS TOAST SYSTEM ---
+    function showBonusToast() {
+      const toast = document.getElementById('bonus-toast');
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        closeBonusToast();
+      }, 5000);
+    }
+
+    function closeBonusToast() {
+      const toast = document.getElementById('bonus-toast');
+      toast.classList.add('hidden');
+    }
+
+    function updateSpinsDisplay() {
+      document.getElementById('spins-left-display').textContent = spinsLeft;
+    }
+
+    // --- WHEEL RENDERING ---
+    function renderWheel() {
+      const canvas = document.getElementById('wheelCanvas');
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radius = width / 2 - 10;
+      const sliceAngle = (2 * Math.PI) / PRIZES.length;
+
+      ctx.clearRect(0, 0, width, height);
+
+      PRIZES.forEach((prize, index) => {
+        const startAngle = index * sliceAngle + currentAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        // Slice Background
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = prize.color;
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.stroke();
+
+        // Text Content
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(startAngle + sliceAngle / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = prize.textColor;
+        ctx.font = "bold 17px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillText(prize.name, radius - 25, 6);
+        ctx.restore();
+      });
+
+      // Outer Ring Accent
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      ctx.lineWidth = 8;
+      ctx.strokeStyle = '#D4AF37';
+      ctx.stroke();
+    }
+
+    // --- SPIN LOGIC ---
+    document.getElementById('btn-spin').addEventListener('click', startSpin);
+    document.getElementById('wheelCanvas').addEventListener('click', startSpin);
+    document.getElementById('btn-add-spin').addEventListener('click', () => {
+      spinsLeft += 1;
+      saveState();
+      updateSpinsDisplay();
+    });
+
+    function getRandomPrizeByWeight() {
+      const totalWeight = PRIZES.reduce((sum, item) => sum + item.weight, 0);
+      let randomNum = Math.random() * totalWeight;
+      for (let prize of PRIZES) {
+        if (randomNum < prize.weight) {
+          return prize;
+        }
+        randomNum -= prize.weight;
+      }
+      return PRIZES[0];
+    }
+
+    function startSpin() {
+      if (isSpinning) return;
+      if (spinsLeft <= 0) {
+        alert("Bạn đã hết lượt quay! Nhấn 'Thêm lượt' hoặc tải lại trang để có thêm lượt quay.");
+        return;
+      }
+
+      isSpinning = true;
+      spinsLeft -= 1;
+      saveState();
+      updateSpinsDisplay();
+
+      const selectedPrize = getRandomPrizeByWeight();
+      pendingPrize = selectedPrize;
+
+      const prizeIndex = PRIZES.findIndex(p => p.id === selectedPrize.id);
+      const numSlices = PRIZES.length;
+      const sliceAngle = (2 * Math.PI) / numSlices;
+
+      const targetSliceCenter = prizeIndex * sliceAngle + sliceAngle / 2;
+      const targetAngle = (3 * Math.PI / 2) - targetSliceCenter;
+      
+      const fullRotations = 5 * 2 * Math.PI;
+      const finalAngle = currentAngle + fullRotations + ((targetAngle - (currentAngle % (2 * Math.PI)) + 4 * Math.PI) % (2 * Math.PI));
+
+      const duration = 4000;
+      const startTime = performance.now();
+      let lastTickAngle = currentAngle;
+
+      function animateSpin(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        currentAngle = currentAngle + (finalAngle - currentAngle) * (easeOut * 0.1);
+
+        if (Math.abs(currentAngle - lastTickAngle) >= sliceAngle) {
+          sound.playTick();
+          lastTickAngle = currentAngle;
+        }
+
+        renderWheel();
+
+        if (progress < 1 && Math.abs(finalAngle - currentAngle) > 0.001) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          currentAngle = finalAngle;
+          renderWheel();
+          isSpinning = false;
+          onSpinComplete(selectedPrize);
+        }
+      }
+
+      requestAnimationFrame(animateSpin);
+    }
+
+    function onSpinComplete(prize) {
+      sound.playWin();
+
+      if (window.confetti) {
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
+
+      document.getElementById('result-prize-title').textContent = prize.fullTitle;
+      document.getElementById('result-prize-desc').textContent = prize.desc;
+
+      const claimBtn = document.getElementById('btn-claim-prize');
+      if (prize.type === 'extra_spin') {
+        claimBtn.innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4"></i><span>Nhận 1 Lượt Quay</span>`;
+      } else {
+        claimBtn.innerHTML = `<i data-lucide="ticket" class="w-4 h-4"></i><span>Lưu Vào Kho Voucher</span>`;
+      }
+      initLucide();
+
+      document.getElementById('modal-result').classList.remove('hidden');
+    }
+
+    function closeResultModal() {
+      document.getElementById('modal-result').classList.add('hidden');
+    }
+
+    function claimPrizeToVouchers() {
+      if (pendingPrize) {
+        if (pendingPrize.type === 'extra_spin') {
+          spinsLeft += 1;
+          saveState();
+          updateSpinsDisplay();
+          closeResultModal();
+          return;
+        }
+
+        const voucher = {
+          id: 'KOVA-' + Math.random().toString(36).substr(2, 6).toUpperCase(),
+          name: pendingPrize.fullTitle,
+          desc: pendingPrize.desc,
+          date: new Date().toLocaleDateString('vi-VN')
+        };
+        userVouchers.unshift(voucher);
+        saveState();
+        renderVouchers();
+      }
+      closeResultModal();
+      switchTab('vouchers');
+    }
+
+    // --- TAB SWITCHING ---
+    function switchTab(tab) {
+      const tabWheelBtn = document.getElementById('tab-wheel');
+      const tabVouchersBtn = document.getElementById('tab-vouchers');
+      const secWheel = document.getElementById('section-wheel');
+      const secVouchers = document.getElementById('section-vouchers');
+
+      if (tab === 'wheel') {
+        tabWheelBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center space-x-2 bg-kova-green text-white shadow-sm";
+        tabVouchersBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center space-x-2 text-stone-600 hover:text-kova-green";
+        secWheel.classList.remove('hidden');
+        secVouchers.classList.add('hidden');
+      } else {
+        tabVouchersBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center space-x-2 bg-kova-green text-white shadow-sm";
+        tabWheelBtn.className = "flex-1 py-2.5 px-4 rounded-xl font-medium text-sm transition-all duration-200 flex items-center justify-center space-x-2 text-stone-600 hover:text-kova-green";
+        secWheel.classList.add('hidden');
+        secVouchers.classList.remove('hidden');
+      }
+    }
+
+    // --- VOUCHER STORE RENDER ---
+    function renderVouchers() {
+      const container = document.getElementById('voucher-list');
+      const emptyState = document.getElementById('voucher-empty');
+      const badge = document.getElementById('voucher-count-badge');
+      const totalText = document.getElementById('voucher-total-text');
+
+      badge.textContent = userVouchers.length;
+      totalText.textContent = `${userVouchers.length} quà tặng`;
+
+      if (userVouchers.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      container.innerHTML = userVouchers.map((v) => `
+        <div class="bg-amber-50/60 border border-stone-200 rounded-2xl p-4 flex items-center justify-between shadow-sm hover:border-kova-gold transition-all">
+          <div class="space-y-1">
+            <span class="text-[10px] uppercase font-extrabold tracking-wider bg-amber-200/60 text-kova-green px-2 py-0.5 rounded-full">Voucher KŌVA</span>
+            <h4 class="font-bold text-stone-800 text-sm">${v.name}</h4>
+            <p class="text-xs text-stone-500">${v.desc}</p>
+            <p class="text-[10px] text-stone-400">Ngày nhận: ${v.date}</p>
+          </div>
+          <button onclick="openQRModal('${v.id}', '${v.name}')" class="px-3.5 py-2 bg-kova-green text-amber-50 text-xs font-semibold rounded-xl hover:bg-kova-olive transition-all flex items-center space-x-1 shrink-0">
+            <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+            <span>Dùng</span>
+          </button>
+        </div>
+      `).join('');
+
+      initLucide();
+    }
+
+    // --- QR CODE MODAL ---
+    function openQRModal(code, name) {
+      document.getElementById('qr-voucher-code').textContent = code;
+      document.getElementById('qr-voucher-name').textContent = name;
+      
+      const qrContainer = document.getElementById('qrcode-container');
+      qrContainer.innerHTML = '';
+
+      new QRCode(qrContainer, {
+        text: code,
+        width: 140,
+        height: 140,
+        colorDark: "#1E3A2B",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+
+      document.getElementById('modal-qr').classList.remove('hidden');
+    }
+
+    function closeQRModal() {
+      document.getElementById('modal-qr').classList.add('hidden');
+    }
+
+    // --- STAFF PANEL CONTROL ---
+    document.getElementById('btn-staff-panel').addEventListener('click', openStaffModal);
+
+    function openStaffModal() {
+      const container = document.getElementById('staff-weights-container');
+      const totalWeight = PRIZES.reduce((sum, item) => sum + item.weight, 0);
+
+      container.innerHTML = PRIZES.map(p => {
+        const percentage = totalWeight > 0 ? ((p.weight / totalWeight) * 100).toFixed(1) : 0;
+        return `
+          <div class="p-3 bg-stone-50 rounded-xl border border-stone-200 flex flex-col space-y-2">
+            <div class="flex justify-between items-center text-xs font-bold text-stone-700">
+              <span>${p.fullTitle}</span>
+              <span class="text-kova-rust"><span id="weight-perc-${p.id}">${percentage}</span>%</span>
+            </div>
+            <div class="flex items-center space-x-3">
+              <input type="range" min="0" max="100" value="${p.weight}" id="weight-input-${p.id}" oninput="updateWeightDisplay()" class="w-full accent-kova-green">
+              <span id="weight-val-${p.id}" class="text-xs font-mono w-8 text-right font-bold text-stone-600">${p.weight}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('modal-staff').classList.remove('hidden');
+    }
+
+    function updateWeightDisplay() {
+      let currentTotal = 0;
+      PRIZES.forEach(p => {
+        const input = document.getElementById(`weight-input-${p.id}`);
+        if (input) currentTotal += parseInt(input.value || 0, 10);
+      });
+
+      PRIZES.forEach(p => {
+        const input = document.getElementById(`weight-input-${p.id}`);
+        const valSpan = document.getElementById(`weight-val-${p.id}`);
+        const percSpan = document.getElementById(`weight-perc-${p.id}`);
+        if (input && valSpan && percSpan) {
+          const val = parseInt(input.value || 0, 10);
+          valSpan.textContent = val;
+          percSpan.textContent = currentTotal > 0 ? ((val / currentTotal) * 100).toFixed(1) : 0;
+        }
+      });
+    }
+
+    function saveStaffWeights() {
+      PRIZES.forEach(p => {
+        const input = document.getElementById(`weight-input-${p.id}`);
+        if (input) {
+          p.weight = parseInt(input.value || 0, 10);
+        }
+      });
+      saveState();
+      closeStaffModal();
+      alert("Đã cập nhật tỉ lệ trúng thưởng thành công!");
+    }
+
+    function resetWeightsToDefault() {
+      const defaults = [30, 25, 15, 15, 10, 5];
+      PRIZES.forEach((p, idx) => {
+        p.weight = defaults[idx];
+      });
+      openStaffModal();
+    }
+
+    function closeStaffModal() {
+      document.getElementById('modal-staff').classList.add('hidden');
+    }
+
+    // --- SOUND TOGGLE ---
+    document.getElementById('btn-sound').addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('icon-sound');
+      if (soundEnabled) {
+        icon.setAttribute('data-lucide', 'volume-2');
+      } else {
+        icon.setAttribute('data-lucide', 'volume-x');
+      }
+      initLucide();
+    });
+  </script>
+</body>
+</html>
